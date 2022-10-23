@@ -19,22 +19,45 @@ export const SlowQueryPointsCard: React.FC<{
   className?: string
   onLoaded?: (slowQueryResp: any) => void
 }> = ({ range, updateRange, className, onLoaded }) => {
+  const dataCache = useRef<any>(null)
+  const fromCache = useRef<any>(false)
   const [slowQueryType, _setSlowQueryType] = useState<
     'all' | 'tikv' | 'tiflash'
   >('all')
   const setSlowQueryType = (value: 'all' | 'tikv' | 'tiflash') => {
     _setSlowQueryType(value)
+    fromCache.current = true
     updateRange()
   }
   const [groupBy, _setGroupBy] = useState('QueryText')
   const setGroupBy = (s: string) => {
     _setGroupBy(s)
+    fromCache.current = true
     updateRange()
   }
   const { get } = useFetch(SQL_ADVISOR_URL)
   const listMapRef = useRef<any>({})
   const getSlowQueryPoints = async (): Promise<MetricsQueryResponse> => {
+    if (fromCache.current) {
+      fromCache.current = false
+      const resp = dataCache.current
+      const data =
+        slowQueryType === 'all'
+          ? [...resp.tidbSlowQueryList, ...resp.tiflashSlowQueryList]
+          : slowQueryType === 'tikv'
+          ? resp.tidbSlowQueryList
+          : resp.tiflashSlowQueryList
+      const { list } = dataTransform(data, groupBy)
+      return {
+        data: {
+          result: list,
+          resultType: 'matrix'
+        },
+        status: 'success'
+      }
+    }
     const resp = await get(`topSlowQuerySummary?t=${range[0]}`)
+    dataCache.current = resp
     onLoaded?.(resp)
     const data =
       slowQueryType === 'all'
