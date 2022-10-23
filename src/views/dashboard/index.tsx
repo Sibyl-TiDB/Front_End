@@ -207,8 +207,17 @@ function App() {
                       type: 'line'
                     }
                   ]}
-                  chartSetting={{ showLegend: false }}
                   unit='qps'
+                  subQueries={[
+                    {
+                      promql:
+                        'sum(rate(tidb_server_handle_query_duration_seconds_sum{sql_type!="internal"}[2m])) / sum(rate(tidb_server_handle_query_duration_seconds_count{sql_type!="internal"}[2m]))',
+                      name: 'Query Duration',
+                      type: 'line'
+                    }
+                  ]}
+                  subUnit='s'
+                  chartSetting={{ showLegend: false }}
                   nullValue={TransformNullValue.AS_ZERO}
                   range={range}
                   fetchPromeData={queryMetrics}
@@ -252,8 +261,23 @@ function App() {
                       type: 'line'
                     }
                   ]}
-                  chartSetting={{ showLegend: false }}
                   unit='short'
+                  subQueries={[
+                    {
+                      promql:
+                        'sum(rate(tidb_server_packet_io_bytes{k8s_cluster="", tidb_cluster="", instance=~".*", type="read"}[1m]))',
+                      name: 'Network In',
+                      type: 'line'
+                    },
+                    {
+                      promql:
+                        'sum(rate(tidb_server_packet_io_bytes{k8s_cluster="", tidb_cluster="", instance=~".*", type="write"}[1m]))',
+                      name: 'Network Out',
+                      type: 'line'
+                    }
+                  ]}
+                  subUnit='Bps'
+                  chartSetting={{ showLegend: false }}
                   nullValue={TransformNullValue.AS_ZERO}
                   range={range}
                   fetchPromeData={queryMetrics}
@@ -457,7 +481,64 @@ function App() {
               />
             </Card>
 
-            <Card className='w-1/2 mx-2 h-[280px] z-[4]'>
+            <Card
+              className='w-1/2 mx-2 h-[280px] z-[4]'
+              expandModalContent={
+                <>
+                  <p className='card-title'>AP Node(TiFlash) Operations</p>
+                  <div className='flex'>
+                    <div className='w-1/2'>
+                      <MetricsChart
+                        height={800}
+                        queries={[
+                          {
+                            promql:
+                              'sum(rate(tiflash_coprocessor_request_count{k8s_cluster="", tidb_cluster="", instance=~".*"}[1m]))',
+                            name: 'AP Read OPS',
+                            type: 'line'
+                          },
+                          {
+                            promql:
+                              'sum(rate(tiflash_coprocessor_request_count{k8s_cluster="", tidb_cluster="", instance=~".*"}[1m])) by (type)',
+                            name: '{type}',
+                            type: 'bar_stacked'
+                          }
+                        ]}
+                        unit='ops'
+                        nullValue={TransformNullValue.AS_ZERO}
+                        range={range}
+                        chartSetting={{
+                          legendSize: 300,
+                          legendPosition: Position.Bottom
+                        }}
+                        fetchPromeData={queryMetrics}
+                      />
+                    </div>
+                    <div className='w-1/2'>
+                      <MetricsChart
+                        height={800}
+                        queries={[
+                          {
+                            promql:
+                              'sum(rate(tiflash_coprocessor_request_duration_seconds_sum[2m])) / sum(rate(tiflash_coprocessor_request_duration_seconds_count[2m]))',
+                            name: 'AP Read OPS Duration',
+                            type: 'line'
+                          }
+                        ]}
+                        unit='s'
+                        nullValue={TransformNullValue.AS_ZERO}
+                        range={range}
+                        chartSetting={{
+                          legendSize: 300,
+                          legendPosition: Position.Bottom
+                        }}
+                        fetchPromeData={queryMetrics}
+                      />
+                    </div>
+                  </div>
+                </>
+              }
+            >
               <p className='card-title'>AP Node(TiFlash) Operations</p>
               <MetricsChart
                 height={200}
@@ -468,14 +549,17 @@ function App() {
                     name: 'AP Read OPS',
                     type: 'line'
                   }
-                  // {
-                  //   promql:
-                  //     'sum(rate(tiflash_coprocessor_request_sum{k8s_cluster="", cluster_id=~".*", instance=~".*"}[2m])) / sum(rate(tiflash_coprocessor_request_count{k8s_cluster="$k8s_cluster", cluster_id=~".*", instance=~".*"}[2m]))',
-                  //   name: 'AP Read OPS Duration',
-                  //   type: 'line'
-                  // }
                 ]}
                 unit='ops'
+                subQueries={[
+                  {
+                    promql:
+                      'sum(rate(tiflash_coprocessor_request_duration_seconds_sum[2m])) / sum(rate(tiflash_coprocessor_request_duration_seconds_count[2m]))',
+                    name: 'AP Read OPS Duration',
+                    type: 'line'
+                  }
+                ]}
+                subUnit='s'
                 nullValue={TransformNullValue.AS_ZERO}
                 range={range}
                 fetchPromeData={queryMetrics}
