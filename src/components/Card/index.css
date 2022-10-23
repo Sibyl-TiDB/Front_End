@@ -1,0 +1,8 @@
+.card {
+  color: #888;
+  background: linear-gradient(to right, #191c2f , #272b43);;
+  padding: 20px;
+  box-sizing: border-box;
+  box-shadow: -40px 45px 60px #404954;
+  border-radius: 5px;
+}
